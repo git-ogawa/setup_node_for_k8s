@@ -1,0 +1,29 @@
+---
+- hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: Generate main.tf
+      ansible.builtin.template:
+        src: main.tf.j2
+        dest: main.tf
+        lstrip_blocks: true
+
+    - name: Run terraform
+      community.general.terraform:
+        project_path: "./"
+        force_init: true
+        state: present
+
+    - name: Get ip address of control-plane nodes
+      ansible.builtin.include_tasks: loop_tasks/control_plane.yml
+      loop: "{{ control_plane }}"
+
+    - name: Get ip address of worker nodes
+      ansible.builtin.include_tasks: loop_tasks/worker.yml
+      loop: "{{ workers }}"
+
+    - name: Generate inventory template
+      ansible.builtin.template:
+        src: inventory.yml.j2
+        dest: template_inventory.yml
+        lstrip_blocks: true

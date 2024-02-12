@@ -1,0 +1,14 @@
+# Terraform
+.terraform.lock.hcl
+.terraform/
+terraform.*
+main.tf
+
+# Ansible
+venv/
+template_*
+
+
+# others
+tmp*
+inventory.yml

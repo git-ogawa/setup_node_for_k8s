@@ -1,0 +1,14 @@
+---
+- hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: Generate main.tf
+      ansible.builtin.template:
+        src: main.tf.j2
+        dest: main.tf
+
+    - name: Terraform destroy
+      community.general.terraform:
+        project_path: "./"
+        # force_init: true
+        state: absent

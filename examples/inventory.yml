@@ -1,0 +1,18 @@
+all:
+  vars:
+    access_key: xxx
+    secret_key: xxx
+    region: ap-northeast-1
+    project_name: k8s
+    memory: 4
+    vcpu: 2
+    key_name: id_rsa
+    subnet_cidr: "10.0.128.0/20"
+    control_plane:
+      - hostname: master-1
+        os: ubuntu-22.04-amd64
+    workers:
+      - hostname: worker-1
+        os: ubuntu-23.04-amd64
+      - hostname: worker-2
+        os: rockylinux-9.2-amd64

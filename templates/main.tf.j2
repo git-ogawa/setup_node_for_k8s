@@ -1,0 +1,81 @@
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.0"
+    }
+  }
+}
+
+provider "aws" {
+  access_key = "{{ access_key }}"
+  secret_key = "{{ secret_key }}"
+  region     = "{{ region }}"
+}
+
+module "network" {
+  source = "./modules/network"
+  subnet_cidr = "{{ subnet_cidr }}"
+}
+
+module "instance_type" {
+  source = "./modules/instance_type"
+  memory = "{{ memory }}"
+  vcpu = "{{ vcpu }}"
+}
+
+{# Get lis of OS #}
+{%- set os_list = [] %}
+{%- for l in [control_plane, workers] %}
+  {%- for i  in l %}
+      {%- set _ = os_list.append(i.os) %}
+  {%- endfor %}
+{%- endfor %}
+
+{# Remove dumplicate element #}
+{% set os_list = os_list | unique | list %}
+{# Define ami module according to os #}
+{% for os in os_list %}
+  {% set _os, version, arch = os.split("-") %}
+  {% if "ubuntu" in _os %}
+  {% set ami_name = "ubuntu/images/hvm-ssd/ubuntu-*-" + version + "-" + arch + "*" %}
+  {% elif "rockylinux" in _os %}
+    {% if arch == "amd64" %}
+    {% set ami_name = "Rocky-9-EC2-Base-" + version + "-*.x86_64" %}
+    {% elif arch == "arm64" %}
+    {% set ami_name = "Rocky-9-EC2-Base-" + version + "-*.aarch64" %}
+    {% endif %}
+  {% endif %}
+  {% set os_name = os.replace(".", "_") %}
+module "{{ os_name }}" {
+  source = "./modules/ami"
+  ami_name = "{{ ami_name }}"
+}
+{% endfor %}
+
+{% for node in control_plane %}
+module "{{ node.hostname }}" {
+  source         = "./modules/instance"
+
+  key_name       = "{{ key_name }}"
+  ami_id         = module.{{ node.os | replace(".", "_") }}.image_id
+  instance_type  = module.instance_type.instance_types[0]
+  subnet         = module.network.subnet.id
+  security_group = module.network.security_group.id
+  hostname       = "{{ node.hostname }}"
+}
+{% endfor %}
+
+{% for node in workers %}
+module "{{ node.hostname }}" {
+  source         = "./modules/instance"
+
+  key_name       = "{{ key_name }}"
+  ami_id         = module.{{ node.os | replace(".", "_") }}.image_id
+  instance_type  = module.instance_type.instance_types[0]
+  subnet         = module.network.subnet.id
+  security_group = module.network.security_group.id
+  hostname       = "{{ node.hostname }}"
+}
+{% endfor %}
+
