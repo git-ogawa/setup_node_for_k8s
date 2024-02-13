@@ -24,6 +24,17 @@ resource "aws_security_group" "k8s" {
   }
 }
 
+resource "aws_vpc_security_group_ingress_rule" "icmp" {
+  security_group_id = aws_security_group.k8s.id
+  cidr_ipv4         = "0.0.0.0/0"
+  ip_protocol       = "icmp"
+  from_port         = -1
+  to_port           = -1
+  tags = {
+    Name = "ping"
+  }
+}
+
 resource "aws_vpc_security_group_ingress_rule" "http" {
   security_group_id = aws_security_group.k8s.id
   cidr_ipv4         = "0.0.0.0/0"
