@@ -1,0 +1,10 @@
+upstream k8s {
+  {% for host in control_plane_hosts %}
+  server {{ host }}:{{ kubernetes_api_port }};
+  {% endfor %}
+}
+
+server {
+  listen {{ kubernetes_api_port }};
+  proxy_pass k8s;
+}

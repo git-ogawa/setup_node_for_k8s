@@ -1,0 +1,4 @@
+---
+- ansible.builtin.import_tasks: install.yml
+
+- ansible.builtin.import_tasks: add_control_plane_hosts.yml

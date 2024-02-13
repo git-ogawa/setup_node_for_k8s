@@ -6,9 +6,9 @@
       ansible.builtin.template:
         src: main.tf.j2
         dest: main.tf
+        lstrip_blocks: true
 
     - name: Terraform destroy
       community.general.terraform:
         project_path: "./"
-        # force_init: true
         state: absent

@@ -79,3 +79,30 @@ module "{{ node.hostname }}" {
 }
 {% endfor %}
 
+{% if load_balancer is defined %}
+{% if load_balancer.type | default("node") == "node" %}
+module "{{ load_balancer.hostname }}" {
+  source         = "./modules/instance"
+
+  key_name       = "{{ key_name }}"
+  ami_id         = module.{{ load_balancer.os | replace(".", "_") }}.image_id
+  instance_type  = module.instance_type.instance_types[0]
+  subnet         = module.network.subnet.id
+  security_group = module.network.security_group.id
+  hostname       = "{{ load_balancer.hostname }}"
+}
+{% elif load_balancer.type | default('node') == "elb" %}
+module "nlb" {
+  source = "./modules/nlb"
+
+  instance_ids = [
+    {% for node in control_plane %}
+    module.{{ node.hostname }}.instance.id{% if not loop.last %},{% endif %}
+    {% endfor %}
+  ]
+  nlb_name          = "{{ load_balancer.hostname }}"
+  subnet_id         = module.network.subnet.id
+  security_group_id = module.network.security_group.id
+}
+{% endif %}
+{% endif %}

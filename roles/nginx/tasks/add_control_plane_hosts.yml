@@ -1,0 +1,24 @@
+---
+- name: Make tcp.conf directory
+  ansible.builtin.file:
+    path: "{{ nginx_tcp_conf_dir }}"
+    state: directory
+  become: true
+
+- name: Add configuration to read tcp-configs in nginx.conf
+  ansible.builtin.blockinfile:
+    dest: "{{ nginx_conf_file }}"
+    content: |
+      stream {
+        include {{ nginx_tcp_conf_dir }}/*.conf;
+      }
+  become: true
+
+- name: Put k8s load balancing config
+  ansible.builtin.template:
+    src: k8s_tcp.conf.j2
+    dest: "{{ nginx_tcp_conf_dir }}/k8s_tcp.conf"
+    mode: "0644"
+    lstrip_blocks: true
+  become: true
+  notify: Restart nginx

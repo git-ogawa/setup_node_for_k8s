@@ -1,0 +1,19 @@
+---
+- name: Setup load balancer
+  hosts: load_balancer
+  gather_facts: true
+  pre_tasks:
+    - name: Add IP address of control-plane nodes in /etc/hosts
+      ansible.builtin.lineinfile:
+        path: /etc/hosts
+        regexp: '^{{ hostvars[item].internal_ipv4 | default(hostvars[item].ansible_host) }}'
+        line: '{{ hostvars[item].internal_ipv4 | default(hostvars[item].ansible_host) }} {{ item }}'
+      become: true
+      loop: "{{ groups.control_plane }}"
+
+  roles:
+    - name: Install nginx
+      role: nginx
+      vars:
+        control_plane_hosts: "{{ groups.control_plane }}"
+        package_manager: "{{ ansible_facts.pkg_mgr }}"

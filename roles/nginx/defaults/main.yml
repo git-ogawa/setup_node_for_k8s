@@ -1,0 +1,8 @@
+---
+nginx_dir: /etc/nginx
+nginx_conf_file: "{{ nginx_dir }}/nginx.conf"
+nginx_conf_dir: /etc/nginx/conf.d
+nginx_tcp_conf_dir: /etc/nginx/tcp_conf.d
+
+# configuration for k8s cluster
+kubernetes_api_port: 6443

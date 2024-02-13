@@ -12,3 +12,4 @@ template_*
 # others
 tmp*
 inventory.yml
+.vscode/

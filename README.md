@@ -154,3 +154,83 @@ $ ansible-playbook delete.yml
 
 The playback runs `terraform destroy` to remove the all resources.
 
+
+## Create nodes for HA cluster
+
+When creating nodes for High-Availability (HA) k8s cluster consisting of multiple control-plane nodes, you need load balancer for distributing traffic to the nodes.
+You can select two types of load balancer.
+
+- `node`: Create a node and install nginx as load balancer.
+- `elb`: Use Network Load Balancer as load balancer.
+
+### type: node
+
+This type create a node and install nginx as load balancer. This may reduce your cost compared to using Network Load Balancer.
+
+To apply the settings, add a node info to `load_balancer` field in inventory.yml and set type to `node`.
+```yml
+    control_plane:
+    ...
+    workers:
+    ...
+    load_balancer:
+      hostname: lb-1
+      os: ubuntu-23.04-amd64
+      type: node
+```
+
+The template created will add the node information for load balancer.
+```yml
+    load_balancer:
+      hosts:
+        lb-1:
+          ansible_host: 54.238.134.6
+          internal_ipv4: 172.31.131.175
+          ansible_user: ubuntu
+          ansible_ssh_port: 22
+          ansible_ssh_private_key_file: ~/.ssh/id_rsa
+          dns_name: lb-1
+```
+
+Then run `lb_setup.yml` with the inventory.
+This play installs nginx on the node to distribute the load across multiple nodes for control plane.
+```
+$ ansible-playbook lb_setup -i template_inventory.yml
+```
+
+HA cluster with multiple control-plane nodes will be created by running the setup playbook on https://github.com/git-ogawa/setup_kube_cluster.
+```
+# Clone the project
+
+# Rename inventory
+mv template_inventory.yml inventory.yml
+
+# Create k8s cluster
+ansible-playbook setup.yml
+```
+
+### type: elb
+
+Add hostname and set `type: elb` in `load_balancer`.
+
+```yml
+    control_plane:
+    ...
+    workers:
+    ...
+    load_balancer:
+      hostname: lb-1
+      type: elb
+```
+
+Running the playbook will create the Network Load Balancer. The DNS name of the NLB is set in `dns_name`.
+
+```yml
+    load_balancer:
+      hosts:
+        lb-1:
+          ansible_host: ""
+          dns_name: k8s-nlb-dce2370ff8d83327.elb.ap-northeast-1.amazonaws.com
+```
+
+You don't need to run lb_setup.yml to install nginx.

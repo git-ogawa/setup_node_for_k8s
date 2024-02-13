@@ -24,7 +24,11 @@ all:
     st2_install: false
     kubevirt_install: false
     ha_cluster:
+      {% if load_balancer is defined %}
+      enabled: true
+      {% else %}
       enabled: false
+      {% endif %}
     github_api_token_enabled: false
     github_api_token: ""
   children:
@@ -59,3 +63,23 @@ all:
           ansible_user: rocky
           {% endif %}
         {% endfor %}
+    {% if load_balancer is defined %}
+    load_balancer:
+      hosts:
+        {{ load_balancer.hostname }}:
+          {% if load_balancer.type == "node" %}
+          ansible_host: {{ load_balancer.public_ip }}
+          internal_ipv4: {{ load_balancer.private_ip }}
+            {% if "ubuntu" in load_balancer.os %}
+          ansible_user: ubuntu
+            {% elif "rockylinux" in load_balancer.os %}
+          ansible_user: rocky
+            {% endif %}
+          ansible_ssh_port: 22
+          ansible_ssh_private_key_file: ~/.ssh/{{ key_name }}
+          dns_name: {{ load_balancer.hostname }}
+          {% elif load_balancer.type == "elb" %}
+          ansible_host: ""
+          dns_name: {{ load_balancer.dns_name }}
+          {% endif %}
+    {% endif %}

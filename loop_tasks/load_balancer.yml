@@ -1,0 +1,16 @@
+---
+- name: Get instance info
+  amazon.aws.ec2_instance_info:
+    filters:
+      "tag:Name": "{{ load_balancer.hostname }}"
+      "instance-state-name": "running"
+  register: instance_info
+
+- name: Add ip addresses
+  set_fact:
+    load_balancer:
+      "{{ load_balancer | combine(props) }}"
+  vars:
+    props:
+      public_ip: "{{ instance_info.instances[0].public_ip_address }}"
+      private_ip: "{{ instance_info.instances[0].private_ip_address }}"

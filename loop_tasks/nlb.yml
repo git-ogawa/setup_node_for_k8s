@@ -1,0 +1,15 @@
+---
+- name: Get NLB info
+  amazon.aws.elb_application_lb_info:
+    names:
+      - "{{ load_balancer.hostname }}"
+  register: elb_info
+
+- name: Add DNS name
+  set_fact:
+    load_balancer:
+      "{{ load_balancer | combine(props) }}"
+  vars:
+    props:
+      dns_name: "{{ elb_info.load_balancers[0].dns_name }}"
+

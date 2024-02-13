@@ -22,6 +22,18 @@
       ansible.builtin.include_tasks: loop_tasks/worker.yml
       loop: "{{ workers }}"
 
+    - name: Get ip address of load balancer
+      ansible.builtin.include_tasks: loop_tasks/load_balancer.yml
+      when:
+        - load_balancer is defined
+        - (load_balancer.type is not defined) or (load_balancer.type == "node")
+
+    - name: Get NLB DNS name
+      ansible.builtin.include_tasks: loop_tasks/nlb.yml
+      when:
+        - load_balancer is defined
+        - load_balancer.type is defined and load_balancer.type == "elb"
+
     - name: Generate inventory template
       ansible.builtin.template:
         src: inventory.yml.j2
